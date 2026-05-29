@@ -7,25 +7,24 @@
     (let ((contents (make-string (file-length stream))))
       (read-sequence contents stream) contents)))
 
-; manually removed two spaces from the delimiter
-(defparameter *file-contents* (read-file "aoc1.csv"))
+(defparameter *file-contents* (read-file "data.txt"))
 
-(defparameter *lines* (split-sequence:split-sequence #\Newline *file-contents*))
+(defparameter *lines* (split-sequence #\Newline *file-contents* :remove-empty-subseqs t))
 
 (defun split-line-to-pair (line)
-  (let ((parts (split-sequence:split-sequence #\Space line)))
+  (let ((parts (split-sequence #\Space line :remove-empty-subseqs t)))
     (cons (parse-integer(first parts)) (parse-integer(second parts)))))
 
 (defparameter *pairs* (mapcar #'split-line-to-pair *lines*))
 
 (defparameter *items0* (mapcar #'first *pairs*))
 (defparameter *items1* (mapcar #'rest *pairs*))
-(defparameter *items2* (remove-if-not (lambda (item) (member item *items0*)) *items1*))
 
 (defparameter *counts*
   (let ((counts (make-hash-table)))
-    (dolist (item *items2*)
-      (incf (gethash item counts 0)))
+    (dolist (item *items1*)
+      (when (member item *items0*)
+        (incf (gethash item counts 0))))
     counts))
 
 (defparameter *items3*
