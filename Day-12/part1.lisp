@@ -38,7 +38,7 @@
             (let ((neighbor (new-position pos (get-direction n))))
               (when (and (in-bounds-p neighbor) (same-char-p neighbor pos))
                 (gethash neighbor *point-spaces*))))
-            '(0 3)))
+          '(0 3)))
         :test #'eq))
     (target-space
       (if matching-spaces
@@ -47,14 +47,18 @@
             (maphash (lambda (k v)
               (setf (gethash k target-space) v)
               (setf (gethash k *point-spaces*) target-space))
-              other-space)
-            (setf *spaces* (remove other-space *spaces*)))
+              other-space))
           target-space)
-        (let ((new-space (make-hash-table :test #'equal)))
-          (push new-space *spaces*)
-          new-space))))
-    (setf (gethash pos target-space) (grid-char pos))
-    (setf (gethash pos *point-spaces*) target-space)))
+        (make-hash-table :test #'equal))))
+  (setf (gethash pos target-space) (grid-char pos))
+  (setf (gethash pos *point-spaces*) target-space)))
+
+(defun get-spaces ()
+  (let ((spaces (make-hash-table :test #'eq)))
+    (maphash (lambda (_ space)
+      (setf (gethash space spaces) space))
+      *point-spaces*)
+    (loop for space being the hash-values of spaces collect space)))
 
 (defun space-perimeter (space)
   (let ((perimeter 0))
@@ -70,13 +74,19 @@
 (defparameter *lines* (split-sequence #\Newline *file-contents*))
 (defparameter *grid* (mapcar #'string-to-string-list *lines*))
 (defparameter *point-spaces* (make-hash-table :test #'equal))
-(defparameter *spaces* '())
 
 (dotimes (y (length *grid*))
   (dotimes (x (length (first *grid*)))
     (addToSpace x y)))
 
+(defparameter *spaces*
+  (let ((spaces '()))
+    (maphash (lambda (_ space)
+      (pushnew space spaces :test #'eq))
+      *point-spaces*)
+    spaces))
+
 (format t "~a~%" (reduce #'+
   (mapcar (lambda (space)
     (* (space-perimeter space) (hash-table-count space)))
-    *spaces*)))
+  *spaces*)))
