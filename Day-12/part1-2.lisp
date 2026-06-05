@@ -128,11 +128,11 @@
                table)
       result)))
 
-(defun contiguous-runs (nums9)
-  (let ((nums2 (sort (copy-list nums9) #'<)))
+(defun contiguous-runs (origNums)
+  (let ((nums (sort (copy-list origNums) #'<)))
     (let ((runs '())
-          (current (list (first nums2))))
-      (dolist (n (rest nums2))
+          (current (list (first nums))))
+      (dolist (n (rest nums))
         (if (= n (1+ (first current)))
          (progn
             (push n current))
@@ -155,24 +155,15 @@
                  (length (second x-group)))
           :initial-value 0))
 
-(defun swap-dims (points)
-  (mapcar (lambda (pt) (cons (cdr pt) (car pt))) points))
-
 (defun points-with-missing-edge (points edge)
   (remove-if-not (lambda (point-edge)
                    (member edge (cdr point-edge) :test #'eq))
                  points))
 
-(defun get-points (pointsWithEdges)
-  (mapcar #'car pointsWithEdges))
-
-(defun points-for-edge (points edge)
-  (get-points (points-with-missing-edge points edge)))
-
 (defun side-count (points edge &optional (swap-p nil))
-  (let ((pts (points-for-edge points edge)))
+  (let ((pts (mapcar #'car (points-with-missing-edge points edge))))
     (when swap-p
-      (setf pts (swap-dims pts)))
+      (setf pts (mapcar (lambda (pt) (cons (cdr pt) (car pt))) pts)))
     (sides-from-grouped (group-contiguous-blocks pts))))
 
 (defun count-all-sides (points)
