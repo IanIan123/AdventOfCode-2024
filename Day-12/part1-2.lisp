@@ -96,6 +96,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun point-missing-edges (space pos)
+  ;; looks at the 4 neighbors of pos and returns a list of which edges are missing
   (let ((edges '()))
     (dolist (dir '((-1 . 0) (0 . 1) (1 . 0) (0 . -1)))
       (unless (gethash (new-position pos dir) space)
@@ -108,6 +109,7 @@
     edges))
 
 (defun perimeter-points (space)
+  ;; returns a list of (pos . missing-edges) for each point on the perimeter of the space
   (let ((perimeter-points '()))
     (maphash (lambda (pos _)
                (let ((missing-edges (point-missing-edges space pos)))
@@ -117,6 +119,7 @@
     (nreverse perimeter-points)))
 
 (defun group-by-x (points)
+  ;; groups points by their x coordinate, returning a list of (x . (list of y's))
   (let ((table (make-hash-table)))
     (dolist (pt points)
       (let ((x (first pt))
@@ -129,6 +132,8 @@
       result)))
 
 (defun contiguous-runs (origNums)
+  ;; takes a list of numbers and returns a list of lists of contiguous runs
+  ;; e.g. (1 2 3 5 6) -> ((1 2 3) (5 6))
   (let ((nums (sort (copy-list origNums) #'<)))
     (let ((runs '())
           (current (list (first nums))))
@@ -143,6 +148,7 @@
       runs)))
 
 (defun group-contiguous-blocks (points)
+  ;; takes a list of (x . y) points and groups them into contiguous blocks by x coordinate
   (mapcar (lambda (x-group)
             (let ((x (car x-group))
                   (ys (cadr x-group)))
@@ -150,23 +156,27 @@
           (group-by-x points)))
 
 (defun sides-from-grouped (grouped)
+  ;; takes the output of group-contiguous-blocks and counts how many sides it has
   (reduce #'+ grouped
           :key (lambda (x-group)
                  (length (second x-group)))
           :initial-value 0))
 
 (defun points-with-missing-edge (points edge)
+  ;; takes a list of (pos . missing-edges) and an edge, and returns a list of points that are missing that edge
   (remove-if-not (lambda (point-edge)
                    (member edge (cdr point-edge) :test #'eq))
                  points))
 
 (defun side-count (points edge &optional (swap-p nil))
+  ;; counts how many sides of the given edge there are in the list of (pos . missing-edges)
   (let ((pts (mapcar #'car (points-with-missing-edge points edge))))
     (when swap-p
       (setf pts (mapcar (lambda (pt) (cons (cdr pt) (car pt))) pts)))
     (sides-from-grouped (group-contiguous-blocks pts))))
 
 (defun count-all-sides (points)
+  ;; counts how many sides there are in total for all 4 edges
   (+ (side-count points :left)
      (side-count points :right)
      (side-count points :top t)
