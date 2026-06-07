@@ -79,7 +79,40 @@
           (format t "Bottom Right: ~A~%" bottomRight)
           (* topLeft topRight bottomLeft bottomRight)))
 
-(let ((rs (deep-copy-robots *robots*)) (width 101) (height 103) (seconds 100))
+(defparameter *part1* (let ((rs (deep-copy-robots *robots*)) (width 101) (height 103) (seconds 100))
   (dotimes (i seconds)
   (update rs width height))
-    (evaluate rs width height))
+    (evaluate rs width height)))
+
+;;;;;;;;;;;;;;;;;;;;;
+;; Part 2
+;;;;;;;;;;;;;;;;;;;;;
+
+(defun evaluate2 (robots width height &optional seconds)
+  (let ((positions (make-hash-table :test #'equal)))
+    (dolist (r robots)
+      (setf (gethash (cons (b-x (a-pos r)) (b-y (a-pos r))) positions) t))
+    (let ((with-neighbour 0))
+      (dolist (r robots)
+        (let ((x (b-x (a-pos r)))
+              (y (b-y (a-pos r))))
+          (when (or (gethash (cons (1+ x) y) positions)
+                    (gethash (cons (1- x) y) positions)
+                    (gethash (cons x (1+ y)) positions)
+                    (gethash (cons x (1- y)) positions))
+            (incf with-neighbour))))
+      (when (>= with-neighbour (floor (length robots) 2))
+        (format t "Found at ~A seconds~%" (or seconds 0))
+        t))))
+
+(defparameter *part2* (let ((rs (deep-copy-robots *robots*)) (width 101) (height 103))
+  (loop for s from 1 do
+    (progn
+      (update rs width height)
+      (when (evaluate2 rs width height s)
+        (progn
+          (render rs width height)
+          (return s)))))))
+
+(format t "Part 1: ~A~%" *part1*)
+(format t "Part 2: ~A~%" *part2*)
