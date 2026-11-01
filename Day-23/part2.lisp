@@ -22,9 +22,10 @@
   (loop for k being the hash-keys of table collect k))
 
 (defun get-connected (s v)
-  (remove-if-not (lambda (item) (gethash item (gethash v *graph*))) s))
+  (let ((neighbors (gethash v *graph*)))
+    (remove-if-not (lambda (item) (gethash item neighbors)) s)))
 
-(defun find-cliques (r p e)
+(defun bron-kerbosch (r p e)
   (if (and (null p) (null e))
       (push r *cliques*)
       (dolist (v p)
@@ -42,6 +43,6 @@
 (loop for (a b) in *pairs*
     do (add-edge a b))
 
-(find-cliques nil (hash-keys *graph*) nil)
+(bron-kerbosch nil (hash-keys *graph*) nil)
 (format nil "~{~a~^,~}"
   (sort (copy-list (first (sort *cliques* #'> :key #'length))) #'string<))
